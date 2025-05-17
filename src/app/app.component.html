@@ -1,0 +1,20 @@
+<div class="layout">
+    <aside class="sidebar">
+        <p-panel-menu [model]="sideItems" styleClass="sidebar-menu">
+        </p-panel-menu>
+
+        <div class="sidebar-footer">
+            <button pButton 
+                    type="button" 
+                    label="Post" 
+                    icon="pi pi-plus" 
+                    class="post-btn"
+                    (click)="openPostModal()">
+            </button>
+        </div>
+    </aside>
+
+    <main class="content">
+        <router-outlet></router-outlet>
+    </main>
+</div>
