@@ -41,6 +41,9 @@ function addClass(element, className) {
     [className].flat().filter(Boolean).forEach((_classNames) => _classNames.split(" ").forEach(fn));
   }
 }
+function calculateBodyScrollbarWidth() {
+  return window.innerWidth - document.documentElement.offsetWidth;
+}
 function getCSSVariableByRegex(variableRegex) {
   for (const sheet of document == null ? void 0 : document.styleSheets) {
     try {
@@ -59,6 +62,11 @@ function getCSSVariableByRegex(variableRegex) {
   }
   return null;
 }
+function blockBodyScroll(className = "p-overflow-hidden") {
+  const variableData = getCSSVariableByRegex(/-scrollbar-width$/);
+  (variableData == null ? void 0 : variableData.name) && document.body.style.setProperty(variableData.name, calculateBodyScrollbarWidth() + "px");
+  addClass(document.body, className);
+}
 function removeClass(element, className) {
   if (element && className) {
     const fn = (_className) => {
@@ -67,6 +75,11 @@ function removeClass(element, className) {
     };
     [className].flat().filter(Boolean).forEach((_classNames) => _classNames.split(" ").forEach(fn));
   }
+}
+function unblockBodyScroll(className = "p-overflow-hidden") {
+  const variableData = getCSSVariableByRegex(/-scrollbar-width$/);
+  (variableData == null ? void 0 : variableData.name) && document.body.style.removeProperty(variableData.name);
+  removeClass(document.body, className);
 }
 function getHiddenElementDimensions(element) {
   let dimensions = {
@@ -232,6 +245,15 @@ function setAttributes(element, attributes = {}) {
     });
   }
 }
+function createElement(type, attributes = {}, ...children) {
+  if (type) {
+    const element = document.createElement(type);
+    setAttributes(element, attributes);
+    element.append(...children);
+    return element;
+  }
+  return void 0;
+}
 function fadeIn(element, duration) {
   if (element) {
     element.style.opacity = "0";
@@ -247,6 +269,9 @@ function fadeIn(element, duration) {
     };
     tick();
   }
+}
+function find(element, selector) {
+  return isElement(element) ? Array.from(element.querySelectorAll(selector)) : [];
 }
 function findSingle(element, selector) {
   return isElement(element) ? element.matches(selector) ? element : element.querySelector(selector) : null;
@@ -267,6 +292,24 @@ function getAttribute(element, name) {
   }
   return void 0;
 }
+function getFocusableElements(element, selector = "") {
+  let focusableElements = find(element, `button:not([tabindex = "-1"]):not([disabled]):not([style*="display:none"]):not([hidden])${selector},
+            [href][clientHeight][clientWidth]:not([tabindex = "-1"]):not([disabled]):not([style*="display:none"]):not([hidden])${selector},
+            input:not([tabindex = "-1"]):not([disabled]):not([style*="display:none"]):not([hidden])${selector},
+            select:not([tabindex = "-1"]):not([disabled]):not([style*="display:none"]):not([hidden])${selector},
+            textarea:not([tabindex = "-1"]):not([disabled]):not([style*="display:none"]):not([hidden])${selector},
+            [tabIndex]:not([tabIndex = "-1"]):not([disabled]):not([style*="display:none"]):not([hidden])${selector},
+            [contenteditable]:not([tabIndex = "-1"]):not([disabled]):not([style*="display:none"]):not([hidden])${selector}`);
+  let visibleFocusableElements = [];
+  for (let focusableElement of focusableElements) {
+    if (getComputedStyle(focusableElement).display != "none" && getComputedStyle(focusableElement).visibility != "hidden") visibleFocusableElements.push(focusableElement);
+  }
+  return visibleFocusableElements;
+}
+function getFirstFocusableElement(element, selector) {
+  const focusableElements = getFocusableElements(element, selector);
+  return focusableElements.length > 0 ? focusableElements[0] : null;
+}
 function getHeight(element) {
   if (element) {
     let height = element.offsetHeight;
@@ -275,6 +318,10 @@ function getHeight(element) {
     return height;
   }
   return 0;
+}
+function getLastFocusableElement(element, selector) {
+  const focusableElements = getFocusableElements(element, selector);
+  return focusableElements.length > 0 ? focusableElements[focusableElements.length - 1] : null;
 }
 function getOffset(element) {
   if (element) {
@@ -1503,7 +1550,9 @@ var TreeDragDropService = class _TreeDragDropService {
 export {
   hasClass,
   addClass,
+  blockBodyScroll,
   removeClass,
+  unblockBodyScroll,
   getViewport,
   getWindowScrollLeft,
   getWindowScrollTop,
@@ -1512,11 +1561,14 @@ export {
   relativePosition,
   appendChild,
   setAttributes,
+  createElement,
   fadeIn,
   findSingle,
   focus,
   getAttribute,
+  getFirstFocusableElement,
   getHeight,
+  getLastFocusableElement,
   getOffset,
   getOuterHeight,
   getWidth,
@@ -1557,4 +1609,4 @@ export {
   TranslationKeys,
   TreeDragDropService
 };
-//# sourceMappingURL=chunk-I37NVG2S.js.map
+//# sourceMappingURL=chunk-UQ57BF7I.js.map

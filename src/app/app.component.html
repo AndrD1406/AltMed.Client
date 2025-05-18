@@ -17,4 +17,23 @@
     <main class="content">
         <router-outlet></router-outlet>
     </main>
+
+    <p-dialog
+        header="New Publication"
+        [(visible)]="displayPostModal"
+        [modal]="true"
+        [closable]="false"
+        [style]="{ width: '80vw', maxWidth: '600px' }"
+        [contentStyle]="{
+            padding: '1rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'stretch'
+        }"
+    >
+        <app-create-or-edit-publication
+            (saved)="onPostSaved($event)"
+            (cancelled)="displayPostModal=false"
+        ></app-create-or-edit-publication>
+    </p-dialog>
 </div>

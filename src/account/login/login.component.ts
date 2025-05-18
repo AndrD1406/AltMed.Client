@@ -8,6 +8,7 @@ import { ButtonModule }            from 'primeng/button';
 import { MessageModule }           from 'primeng/message';
 import { CookieService }           from 'ngx-cookie-service';
 import { AccountServiceProxy, LoginDto, AuthenticationResponse } from '../../app/shared/api/service-proxies';
+import { AuthService } from '../../app/shared/api/auth.service';
 
 @Component({
     selector: 'app-login',
@@ -35,14 +36,12 @@ export class LoginComponent {
 
     constructor(
         private api: AccountServiceProxy,
-        private cookies: CookieService,
+        private authService: AuthService,
         private router: Router
     ) {}
 
     onSubmit(form: NgForm) {
-        if (form.invalid) {
-            return;
-        }
+        if (form.invalid) return;
         this.loading = true;
         this.error = undefined;
 
@@ -51,21 +50,19 @@ export class LoginComponent {
         dto.password = this.model.password;
 
         this.api.login(dto).subscribe({
-            next: (resp: AuthenticationResponse) => {
-                const opts: any = {
-                    path: '/', secure: true, sameSite: 'Strict'
-                };
-                if (this.model.rememberMe) {
-                    opts.expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-                }
-                this.cookies.set('jwt', resp.token!, opts);
-                this.cookies.set('refreshToken', resp.refreshToken!, opts);
-                this.router.navigate(['/']);
-            },
-            error: err => {
-                this.error = err.error?.detail || 'Login failed';
-                this.loading = false;
-            }
+        next: (resp: AuthenticationResponse) => {
+            // 1) remember the “remember me” choice
+            this.authService.setRememberMe(this.model.rememberMe);
+
+            // 2) store tokens (handles expiry, sameSite, secure, etc.)
+            this.authService.storeTokens(resp, this.model.rememberMe);
+
+            this.router.navigate(['/']);
+        },
+        error: err => {
+            this.error = err.error?.detail || 'Login failed';
+            this.loading = false;
+        }
         });
     }
 }

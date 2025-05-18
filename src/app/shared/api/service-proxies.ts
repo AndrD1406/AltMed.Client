@@ -339,6 +339,280 @@ export class ApiServiceProxy {
     }
 }
 
+@Injectable({
+    providedIn: 'root'
+})
+export class PublicationServiceProxy {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "";
+    }
+
+    /**
+     * @param body (optional) 
+     * @return Created
+     */
+    create(body: PublicationCreateDto | undefined): Observable<Publication> {
+        let url_ = this.baseUrl + "/api/Publication/Create";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processCreate(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processCreate(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<Publication>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<Publication>;
+        }));
+    }
+
+    protected processCreate(response: HttpResponseBase): Observable<Publication> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 201) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result201: any = null;
+            let resultData201 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result201 = Publication.fromJS(resultData201);
+            return _observableOf(result201);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetails.fromJS(resultData400);
+            return throwException("Bad Request", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    getById(id: string): Observable<Publication> {
+        let url_ = this.baseUrl + "/api/Publication/GetById/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetById(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetById(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<Publication>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<Publication>;
+        }));
+    }
+
+    protected processGetById(response: HttpResponseBase): Observable<Publication> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = Publication.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            let resultData404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+}
+
+export class ApplicationUser implements IApplicationUser {
+    id?: string;
+    userName?: string | undefined;
+    normalizedUserName?: string | undefined;
+    email?: string | undefined;
+    normalizedEmail?: string | undefined;
+    emailConfirmed?: boolean;
+    passwordHash?: string | undefined;
+    securityStamp?: string | undefined;
+    concurrencyStamp?: string | undefined;
+    phoneNumber?: string | undefined;
+    phoneNumberConfirmed?: boolean;
+    twoFactorEnabled?: boolean;
+    lockoutEnd?: string | undefined;
+    lockoutEnabled?: boolean;
+    accessFailedCount?: number;
+    name?: string | undefined;
+    refreshToken?: string | undefined;
+    refreshTokenExpirationDateTime?: string;
+    publications?: Publication[] | undefined;
+    likes?: Like[] | undefined;
+    logo?: string | undefined;
+    description?: string | undefined;
+
+    constructor(data?: IApplicationUser) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.userName = _data["userName"];
+            this.normalizedUserName = _data["normalizedUserName"];
+            this.email = _data["email"];
+            this.normalizedEmail = _data["normalizedEmail"];
+            this.emailConfirmed = _data["emailConfirmed"];
+            this.passwordHash = _data["passwordHash"];
+            this.securityStamp = _data["securityStamp"];
+            this.concurrencyStamp = _data["concurrencyStamp"];
+            this.phoneNumber = _data["phoneNumber"];
+            this.phoneNumberConfirmed = _data["phoneNumberConfirmed"];
+            this.twoFactorEnabled = _data["twoFactorEnabled"];
+            this.lockoutEnd = _data["lockoutEnd"];
+            this.lockoutEnabled = _data["lockoutEnabled"];
+            this.accessFailedCount = _data["accessFailedCount"];
+            this.name = _data["name"];
+            this.refreshToken = _data["refreshToken"];
+            this.refreshTokenExpirationDateTime = _data["refreshTokenExpirationDateTime"];
+            if (Array.isArray(_data["publications"])) {
+                this.publications = [] as any;
+                for (let item of _data["publications"])
+                    this.publications!.push(Publication.fromJS(item));
+            }
+            if (Array.isArray(_data["likes"])) {
+                this.likes = [] as any;
+                for (let item of _data["likes"])
+                    this.likes!.push(Like.fromJS(item));
+            }
+            this.logo = _data["logo"];
+            this.description = _data["description"];
+        }
+    }
+
+    static fromJS(data: any): ApplicationUser {
+        data = typeof data === 'object' ? data : {};
+        let result = new ApplicationUser();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["userName"] = this.userName;
+        data["normalizedUserName"] = this.normalizedUserName;
+        data["email"] = this.email;
+        data["normalizedEmail"] = this.normalizedEmail;
+        data["emailConfirmed"] = this.emailConfirmed;
+        data["passwordHash"] = this.passwordHash;
+        data["securityStamp"] = this.securityStamp;
+        data["concurrencyStamp"] = this.concurrencyStamp;
+        data["phoneNumber"] = this.phoneNumber;
+        data["phoneNumberConfirmed"] = this.phoneNumberConfirmed;
+        data["twoFactorEnabled"] = this.twoFactorEnabled;
+        data["lockoutEnd"] = this.lockoutEnd;
+        data["lockoutEnabled"] = this.lockoutEnabled;
+        data["accessFailedCount"] = this.accessFailedCount;
+        data["name"] = this.name;
+        data["refreshToken"] = this.refreshToken;
+        data["refreshTokenExpirationDateTime"] = this.refreshTokenExpirationDateTime;
+        if (Array.isArray(this.publications)) {
+            data["publications"] = [];
+            for (let item of this.publications)
+                data["publications"].push(item ? item.toJSON() : <any>undefined);
+        }
+        if (Array.isArray(this.likes)) {
+            data["likes"] = [];
+            for (let item of this.likes)
+                data["likes"].push(item ? item.toJSON() : <any>undefined);
+        }
+        data["logo"] = this.logo;
+        data["description"] = this.description;
+        return data;
+    }
+}
+
+export interface IApplicationUser {
+    id?: string;
+    userName?: string | undefined;
+    normalizedUserName?: string | undefined;
+    email?: string | undefined;
+    normalizedEmail?: string | undefined;
+    emailConfirmed?: boolean;
+    passwordHash?: string | undefined;
+    securityStamp?: string | undefined;
+    concurrencyStamp?: string | undefined;
+    phoneNumber?: string | undefined;
+    phoneNumberConfirmed?: boolean;
+    twoFactorEnabled?: boolean;
+    lockoutEnd?: string | undefined;
+    lockoutEnabled?: boolean;
+    accessFailedCount?: number;
+    name?: string | undefined;
+    refreshToken?: string | undefined;
+    refreshTokenExpirationDateTime?: string;
+    publications?: Publication[] | undefined;
+    likes?: Like[] | undefined;
+    logo?: string | undefined;
+    description?: string | undefined;
+}
+
 export class AuthenticationResponse implements IAuthenticationResponse {
     userName?: string | undefined;
     email?: string | undefined;
@@ -393,6 +667,62 @@ export interface IAuthenticationResponse {
     expiration?: string;
     refreshToken?: string | undefined;
     refreshTokenExpirationDateTime?: string;
+}
+
+export class Like implements ILike {
+    id?: string;
+    authorId?: string | undefined;
+    author?: ApplicationUser;
+    publicationId?: string;
+    publication?: Publication;
+    isLiked?: boolean;
+
+    constructor(data?: ILike) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.authorId = _data["authorId"];
+            this.author = _data["author"] ? ApplicationUser.fromJS(_data["author"]) : <any>undefined;
+            this.publicationId = _data["publicationId"];
+            this.publication = _data["publication"] ? Publication.fromJS(_data["publication"]) : <any>undefined;
+            this.isLiked = _data["isLiked"];
+        }
+    }
+
+    static fromJS(data: any): Like {
+        data = typeof data === 'object' ? data : {};
+        let result = new Like();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["authorId"] = this.authorId;
+        data["author"] = this.author ? this.author.toJSON() : <any>undefined;
+        data["publicationId"] = this.publicationId;
+        data["publication"] = this.publication ? this.publication.toJSON() : <any>undefined;
+        data["isLiked"] = this.isLiked;
+        return data;
+    }
+}
+
+export interface ILike {
+    id?: string;
+    authorId?: string | undefined;
+    author?: ApplicationUser;
+    publicationId?: string;
+    publication?: Publication;
+    isLiked?: boolean;
 }
 
 export class LoginDto implements ILoginDto {
@@ -497,6 +827,134 @@ export interface IProblemDetails {
     instance?: string | undefined;
 
     [key: string]: any;
+}
+
+export class Publication implements IPublication {
+    id?: string;
+    content?: string | undefined;
+    image64?: string | undefined;
+    postedAt?: string;
+    authorId?: string;
+    author?: ApplicationUser;
+    likes?: Like[] | undefined;
+    parentId?: string | undefined;
+    parent?: Publication;
+    comments?: Publication[] | undefined;
+
+    constructor(data?: IPublication) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.content = _data["content"];
+            this.image64 = _data["image64"];
+            this.postedAt = _data["postedAt"];
+            this.authorId = _data["authorId"];
+            this.author = _data["author"] ? ApplicationUser.fromJS(_data["author"]) : <any>undefined;
+            if (Array.isArray(_data["likes"])) {
+                this.likes = [] as any;
+                for (let item of _data["likes"])
+                    this.likes!.push(Like.fromJS(item));
+            }
+            this.parentId = _data["parentId"];
+            this.parent = _data["parent"] ? Publication.fromJS(_data["parent"]) : <any>undefined;
+            if (Array.isArray(_data["comments"])) {
+                this.comments = [] as any;
+                for (let item of _data["comments"])
+                    this.comments!.push(Publication.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): Publication {
+        data = typeof data === 'object' ? data : {};
+        let result = new Publication();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["content"] = this.content;
+        data["image64"] = this.image64;
+        data["postedAt"] = this.postedAt;
+        data["authorId"] = this.authorId;
+        data["author"] = this.author ? this.author.toJSON() : <any>undefined;
+        if (Array.isArray(this.likes)) {
+            data["likes"] = [];
+            for (let item of this.likes)
+                data["likes"].push(item ? item.toJSON() : <any>undefined);
+        }
+        data["parentId"] = this.parentId;
+        data["parent"] = this.parent ? this.parent.toJSON() : <any>undefined;
+        if (Array.isArray(this.comments)) {
+            data["comments"] = [];
+            for (let item of this.comments)
+                data["comments"].push(item ? item.toJSON() : <any>undefined);
+        }
+        return data;
+    }
+}
+
+export interface IPublication {
+    id?: string;
+    content?: string | undefined;
+    image64?: string | undefined;
+    postedAt?: string;
+    authorId?: string;
+    author?: ApplicationUser;
+    likes?: Like[] | undefined;
+    parentId?: string | undefined;
+    parent?: Publication;
+    comments?: Publication[] | undefined;
+}
+
+export class PublicationCreateDto implements IPublicationCreateDto {
+    content?: string | undefined;
+    image64?: string | undefined;
+
+    constructor(data?: IPublicationCreateDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.content = _data["content"];
+            this.image64 = _data["image64"];
+        }
+    }
+
+    static fromJS(data: any): PublicationCreateDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PublicationCreateDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["content"] = this.content;
+        data["image64"] = this.image64;
+        return data;
+    }
+}
+
+export interface IPublicationCreateDto {
+    content?: string | undefined;
+    image64?: string | undefined;
 }
 
 export class RegisterDto implements IRegisterDto {

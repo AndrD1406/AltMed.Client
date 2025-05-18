@@ -6,6 +6,8 @@ import { RouterOutlet }     from '@angular/router';
 import { PanelMenuModule }  from 'primeng/panelmenu';
 import { MenuItem }         from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
+import { CreateOrEditPublicationComponent } from './shared/components/create-or-edit-publication/create-or-edit-publication.component';
 
 @Component({
     selector: 'app-root',
@@ -15,7 +17,9 @@ import { ButtonModule } from 'primeng/button';
         FormsModule,
         RouterOutlet,
         PanelMenuModule,
-        ButtonModule
+        ButtonModule,
+        DialogModule,
+        CreateOrEditPublicationComponent
     ],
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css']
@@ -34,7 +38,13 @@ export class AppComponent {
         }
     ];
 
-    openPostModal(){
+    displayPostModal = false;
 
+    openPostModal() {
+        this.displayPostModal = true;
+    }
+
+    onPostSaved(pub: any) {
+        this.displayPostModal = false;
     }
 }

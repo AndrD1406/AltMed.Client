@@ -1,0 +1,83 @@
+<form #form="ngForm" (ngSubmit)="onSubmit(form)" novalidate class="w-full space-y-6">
+    <div class="w-full">
+        <textarea
+        id="content"
+        name="content"
+        [required]="!model.image64"
+        rows="8"
+        maxlength="250"
+        placeholder="What’s happening?"
+        [(ngModel)]="model.content"
+        #contentCtrl="ngModel"
+        (paste)="onPaste($event)"
+        class="w-full p-4 text-base resize-y border border-gray-300 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none"
+        ></textarea>
+        <div class="mt-1 text-sm text-gray-500 text-right">
+        {{ model.content.length }} / 250
+        </div>
+        <small
+        *ngIf="contentCtrl.invalid && contentCtrl.touched && !model.image64"
+        class="block mt-1 text-red-500"
+        >
+        Content is required.
+        </small>
+    </div>
+
+    <div *ngIf="previewUrl" class="w-full">
+        <img
+        [src]="previewUrl"
+        alt="preview"
+        class="w-full rounded-lg mb-2 border border-gray-600"
+        />
+        <button
+        type="button"
+        pButton
+        icon="pi pi-trash"
+        class="inline-flex items-center justify-center p-2 bg-red-600 hover:bg-red-700 text-white rounded-full"
+        (click)="clearImage()"
+        ></button>
+    </div>
+
+    <div class="w-full text-center">
+        <input
+        #fileInput
+        type="file"
+        accept="image/*"
+        (change)="onFileChange($event)"
+        hidden
+        />
+        <button
+        type="button"
+        pButton
+        icon="pi pi-upload"
+        label="Choose Image"
+        (click)="fileInput.click()"
+        class="w-full inline-flex items-center justify-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md"
+        ></button>
+    </div>
+
+    <p-message
+        *ngIf="error"
+        severity="error"
+        text="{{ error }}"
+        class="block"
+    ></p-message>
+
+    <div class="flex justify-end space-x-3">
+        <button
+        pButton
+        type="button"
+        label="Cancel"
+        class="p-button-text text-white"
+        (click)="onCancel()"
+        ></button>
+        <button
+        pButton
+        type="submit"
+        label="Save"
+        [disabled]="loading || (!model.content.trim() && !model.image64)"
+        [loading]="loading"
+        class="bg-green-600 hover:bg-green-700 text-white"
+        ></button>
+    </div>
+</form>

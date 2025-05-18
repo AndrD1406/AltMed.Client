@@ -61,6 +61,20 @@ function transition(stateChangeExpr, steps, options = null) {
     options
   };
 }
+function animation(steps, options = null) {
+  return {
+    type: AnimationMetadataType.Reference,
+    animation: steps,
+    options
+  };
+}
+function useAnimation(animation2, options = null) {
+  return {
+    type: AnimationMetadataType.AnimateRef,
+    animation: animation2,
+    options
+  };
+}
 var NoopAnimationPlayer = class {
   _onDoneFns = [];
   _onStartFns = [];
@@ -293,6 +307,8 @@ export {
   style,
   state,
   transition,
+  animation,
+  useAnimation,
   NoopAnimationPlayer,
   AnimationGroupPlayer,
   ɵPRE_STYLE
@@ -306,4 +322,4 @@ export {
    * License: MIT
    *)
 */
-//# sourceMappingURL=chunk-CILGPIRX.js.map
+//# sourceMappingURL=chunk-FGAPHBZR.js.map
