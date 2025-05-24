@@ -1,1 +1,50 @@
-<p>profile works!</p>
+<ng-container *ngIf="profile; else loading">
+    <div class="p-4 max-w-2xl mx-auto flex flex-col gap-6">
+        <div class="flex items-center gap-4">
+        <img
+            class="w-24 h-24 rounded-full object-cover"
+            [src]="profile.logo || '/assets/default-logo.png'"
+            alt="User logo"
+        />
+
+        <button
+            pButton
+            type="button"
+            icon="pi pi-pencil"
+            class="p-button-rounded p-button-outlined"
+            (click)="openEditDialog()">
+        </button>
+
+        <div class="flex flex-col">
+            <span class="text-2xl font-semibold">{{ profile.name }}</span>
+            <!-- <span class="text-sm text-gray-400">
+            Joined {{ profile.registeredAt | date:'longDate' }}
+            </span> -->
+        </div>
+        </div>
+
+    <!--     
+        <p-dialog
+        header="Edit Profile"
+        [(visible)]="showEditDialog"
+        [modal]="true"
+        [style]="{ width: '400px' }"
+        (onHide)="closeEditDialog()">
+        <p>Edit form goes here…</p>
+        </p-dialog> -->
+
+        <!-- User's posts -->
+        <div class="flex flex-col gap-4">
+        <app-publication
+            *ngFor="let pub of publications"
+            [publication]="pub">
+        </app-publication>
+        </div>
+    </div>
+    </ng-container>
+
+    <ng-template #loading>
+    <div class="p-4 text-center text-gray-500">
+        Loading profile…
+    </div>
+</ng-template>

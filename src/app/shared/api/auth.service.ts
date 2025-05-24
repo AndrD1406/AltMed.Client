@@ -39,4 +39,19 @@ export class AuthService {
     setRememberMe(flag: boolean) {
     localStorage.setItem('rememberMe', flag ? 'true' : 'false');
     }
+
+    getUserIdFromToken(): string | null {
+        const token = this.cookies.get('jwt');
+        if (!token) return null;
+
+        try {
+            const payloadBase64 = token.split('.')[1];
+            const payloadJson   = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
+            const payload      = JSON.parse(payloadJson);
+
+            return payload['nameid'] || payload['sub'] || null;
+        } catch {
+        return null;
+        }
+    }
 }

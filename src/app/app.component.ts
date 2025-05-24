@@ -8,6 +8,7 @@ import { MenuItem }         from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { CreateOrEditPublicationComponent } from './shared/components/create-or-edit-publication/create-or-edit-publication.component';
+import { AuthService } from './shared/api/auth.service';
 
 @Component({
     selector: 'app-root',
@@ -25,18 +26,30 @@ import { CreateOrEditPublicationComponent } from './shared/components/create-or-
     styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-    sideItems: MenuItem[] = [
-        { label: 'Main',   icon: 'pi pi-home',   routerLink: '/home'   },
-        { label: 'Search', icon: 'pi pi-search', routerLink: '/search' },
-        { label: 'Profile',icon: 'pi pi-user',   routerLink: '/profile'},
+    constructor(private authService: AuthService){}
+
+    sideItems: MenuItem[] = [];
+
+    ngOnInit() {
+        const myId = this.authService.getUserIdFromToken();
+
+        this.sideItems = [
+        { label: 'Main',   icon: 'pi pi-home',   routerLink: ['/home']   },
+        { label: 'Search', icon: 'pi pi-search', routerLink: ['/search'] },
+        { 
+            label: 'Profile',
+            icon: 'pi pi-user',
+            routerLink: ['/profile', myId]
+        },
         {
             label: 'More',
             items: [
-                { label: 'Settings', icon: 'pi pi-cog',  routerLink: '/settings' },
-                { label: 'Help',     icon: 'pi pi-info', routerLink: '/help'     }
+            { label: 'Settings', icon: 'pi pi-cog',  routerLink: ['/settings'] },
+            { label: 'Help',     icon: 'pi pi-info', routerLink: ['/help']     }
             ]
         }
-    ];
+        ];
+    }
 
     displayPostModal = false;
 

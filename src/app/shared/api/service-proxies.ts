@@ -475,6 +475,304 @@ export class PublicationServiceProxy {
         }
         return _observableOf(null as any);
     }
+
+    /**
+     * @return OK
+     */
+    get(): Observable<Publication[]> {
+        let url_ = this.baseUrl + "/api/Publication/Get";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGet(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGet(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<Publication[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<Publication[]>;
+        }));
+    }
+
+    protected processGet(response: HttpResponseBase): Observable<Publication[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(Publication.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    getWithDetails(): Observable<PublicationDto[]> {
+        let url_ = this.baseUrl + "/api/Publication/GetWithDetails";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetWithDetails(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetWithDetails(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PublicationDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PublicationDto[]>;
+        }));
+    }
+
+    protected processGetWithDetails(response: HttpResponseBase): Observable<PublicationDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(PublicationDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id (optional) 
+     * @return OK
+     */
+    like(id: string | undefined): Observable<LikeDto> {
+        let url_ = this.baseUrl + "/api/Publication/Like?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processLike(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processLike(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<LikeDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<LikeDto>;
+        }));
+    }
+
+    protected processLike(response: HttpResponseBase): Observable<LikeDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = LikeDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id (optional) 
+     * @return OK
+     */
+    getByUserId(id: string | undefined): Observable<PublicationDto[]> {
+        let url_ = this.baseUrl + "/api/Publication/GetByUserId?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetByUserId(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetByUserId(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<PublicationDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<PublicationDto[]>;
+        }));
+    }
+
+    protected processGetByUserId(response: HttpResponseBase): Observable<PublicationDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(PublicationDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    /**
+     * @param id (optional) 
+     * @return OK
+     */
+    getUserById(id: string | undefined): Observable<ProfileDto> {
+        let url_ = this.baseUrl + "/api/Publication/GetUserById?";
+        if (id === null)
+            throw new Error("The parameter 'id' cannot be null.");
+        else if (id !== undefined)
+            url_ += "id=" + encodeURIComponent("" + id) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetUserById(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetUserById(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ProfileDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ProfileDto>;
+        }));
+    }
+
+    protected processGetUserById(response: HttpResponseBase): Observable<ProfileDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ProfileDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status === 404) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result404: any = null;
+            let resultData404 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result404 = ProblemDetails.fromJS(resultData404);
+            return throwException("Not Found", status, _responseText, _headers, result404);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
 }
 
 export class ApplicationUser implements IApplicationUser {
@@ -669,6 +967,70 @@ export interface IAuthenticationResponse {
     refreshTokenExpirationDateTime?: string;
 }
 
+export class CommentDto implements ICommentDto {
+    id?: string;
+    parentId?: string;
+    createdAt?: string;
+    image64?: string | undefined;
+    content?: string | undefined;
+    authorId?: string;
+    authorName?: string | undefined;
+    authorLogo?: string | undefined;
+
+    constructor(data?: ICommentDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.parentId = _data["parentId"];
+            this.createdAt = _data["createdAt"];
+            this.image64 = _data["image64"];
+            this.content = _data["content"];
+            this.authorId = _data["authorId"];
+            this.authorName = _data["authorName"];
+            this.authorLogo = _data["authorLogo"];
+        }
+    }
+
+    static fromJS(data: any): CommentDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CommentDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["parentId"] = this.parentId;
+        data["createdAt"] = this.createdAt;
+        data["image64"] = this.image64;
+        data["content"] = this.content;
+        data["authorId"] = this.authorId;
+        data["authorName"] = this.authorName;
+        data["authorLogo"] = this.authorLogo;
+        return data;
+    }
+}
+
+export interface ICommentDto {
+    id?: string;
+    parentId?: string;
+    createdAt?: string;
+    image64?: string | undefined;
+    content?: string | undefined;
+    authorId?: string;
+    authorName?: string | undefined;
+    authorLogo?: string | undefined;
+}
+
 export class Like implements ILike {
     id?: string;
     authorId?: string | undefined;
@@ -722,6 +1084,58 @@ export interface ILike {
     author?: ApplicationUser;
     publicationId?: string;
     publication?: Publication;
+    isLiked?: boolean;
+}
+
+export class LikeDto implements ILikeDto {
+    id?: string;
+    publicationId?: string;
+    authorId?: string | undefined;
+    authorName?: string | undefined;
+    isLiked?: boolean;
+
+    constructor(data?: ILikeDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.publicationId = _data["publicationId"];
+            this.authorId = _data["authorId"];
+            this.authorName = _data["authorName"];
+            this.isLiked = _data["isLiked"];
+        }
+    }
+
+    static fromJS(data: any): LikeDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new LikeDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["publicationId"] = this.publicationId;
+        data["authorId"] = this.authorId;
+        data["authorName"] = this.authorName;
+        data["isLiked"] = this.isLiked;
+        return data;
+    }
+}
+
+export interface ILikeDto {
+    id?: string;
+    publicationId?: string;
+    authorId?: string | undefined;
+    authorName?: string | undefined;
     isLiked?: boolean;
 }
 
@@ -827,6 +1241,62 @@ export interface IProblemDetails {
     instance?: string | undefined;
 
     [key: string]: any;
+}
+
+export class ProfileDto implements IProfileDto {
+    userId?: string;
+    name?: string | undefined;
+    logo?: string | undefined;
+    publicationIds?: string[] | undefined;
+
+    constructor(data?: IProfileDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.userId = _data["userId"];
+            this.name = _data["name"];
+            this.logo = _data["logo"];
+            if (Array.isArray(_data["publicationIds"])) {
+                this.publicationIds = [] as any;
+                for (let item of _data["publicationIds"])
+                    this.publicationIds!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): ProfileDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ProfileDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userId"] = this.userId;
+        data["name"] = this.name;
+        data["logo"] = this.logo;
+        if (Array.isArray(this.publicationIds)) {
+            data["publicationIds"] = [];
+            for (let item of this.publicationIds)
+                data["publicationIds"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface IProfileDto {
+    userId?: string;
+    name?: string | undefined;
+    logo?: string | undefined;
+    publicationIds?: string[] | undefined;
 }
 
 export class Publication implements IPublication {
@@ -955,6 +1425,90 @@ export class PublicationCreateDto implements IPublicationCreateDto {
 export interface IPublicationCreateDto {
     content?: string | undefined;
     image64?: string | undefined;
+}
+
+export class PublicationDto implements IPublicationDto {
+    id?: string;
+    content?: string | undefined;
+    image64?: string | undefined;
+    postedAt?: string;
+    authorId?: string;
+    authorName?: string | undefined;
+    authorLogo?: string | undefined;
+    likes?: LikeDto[] | undefined;
+    comments?: CommentDto[] | undefined;
+
+    constructor(data?: IPublicationDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.content = _data["content"];
+            this.image64 = _data["image64"];
+            this.postedAt = _data["postedAt"];
+            this.authorId = _data["authorId"];
+            this.authorName = _data["authorName"];
+            this.authorLogo = _data["authorLogo"];
+            if (Array.isArray(_data["likes"])) {
+                this.likes = [] as any;
+                for (let item of _data["likes"])
+                    this.likes!.push(LikeDto.fromJS(item));
+            }
+            if (Array.isArray(_data["comments"])) {
+                this.comments = [] as any;
+                for (let item of _data["comments"])
+                    this.comments!.push(CommentDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): PublicationDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PublicationDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["content"] = this.content;
+        data["image64"] = this.image64;
+        data["postedAt"] = this.postedAt;
+        data["authorId"] = this.authorId;
+        data["authorName"] = this.authorName;
+        data["authorLogo"] = this.authorLogo;
+        if (Array.isArray(this.likes)) {
+            data["likes"] = [];
+            for (let item of this.likes)
+                data["likes"].push(item ? item.toJSON() : <any>undefined);
+        }
+        if (Array.isArray(this.comments)) {
+            data["comments"] = [];
+            for (let item of this.comments)
+                data["comments"].push(item ? item.toJSON() : <any>undefined);
+        }
+        return data;
+    }
+}
+
+export interface IPublicationDto {
+    id?: string;
+    content?: string | undefined;
+    image64?: string | undefined;
+    postedAt?: string;
+    authorId?: string;
+    authorName?: string | undefined;
+    authorLogo?: string | undefined;
+    likes?: LikeDto[] | undefined;
+    comments?: CommentDto[] | undefined;
 }
 
 export class RegisterDto implements IRegisterDto {
