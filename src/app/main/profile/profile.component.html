@@ -6,7 +6,7 @@
             <img
                 class="w-24 h-24 rounded-full object-cover"
                 [src]="getLogoSrc(profile.logo)"
-                alt="User logo"
+                alt="{{ 'UserLogo' | localize }}"
             />
             <span class="text-2xl font-semibold">{{ profile.name }}</span>
         </div>
@@ -24,7 +24,7 @@
         <div class="border-b border-gray-600"></div>
 
         <p-dialog
-            header="Edit Profile"
+            header="{{ 'EditProfile' | localize }}"
             [(visible)]="showEditDialog"
             [modal]="true"
             [style]="{ width: '400px' }"
@@ -47,6 +47,6 @@
 
 <ng-template #loading>
     <div class="p-4 text-center text-gray-500">
-        Loading profile…
+        {{ 'LoadingProfile' | localize }}
     </div>
 </ng-template>
