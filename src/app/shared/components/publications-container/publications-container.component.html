@@ -1,12 +1,108 @@
-<div
-  class=" max-h-screen flex flex-col gap-4 p-4
-         max-w-2xl mx-auto
-         border-r border-white/20"
->
-  <app-publication
-    *ngFor="let pub of publications"
-    [publication]="pub"
-    (like)="handleLike($event)"
-    (comment)="handleComment($event)"
-  ></app-publication>
+<div #scrollContainer class="max-h-screen overflow-auto" (scroll)="onScroll()">
+    <div class="flex flex-col gap-4 p-4 max-w-2xl mx-auto border-r border-white/20">
+        <app-publication
+        *ngFor="let pub of publications; trackBy: trackByPub"
+        [publication]="pub"
+        (like)="handleLike($event)"
+        (comment)="handleComment($event)"
+        ></app-publication>
+
+        <div *ngIf="loading && !allLoaded" class="text-center py-4 text-gray-500">
+        Loading…
+        </div>
+        <div *ngIf="allLoaded && publications.length>0" class="text-center py-4 text-gray-500">
+        No more posts.
+        </div>
+        <div *ngIf="allLoaded && publications.length===0" class="text-center py-4 text-gray-500">
+        No posts found.
+        </div>
+    </div>
 </div>
+
+<p-dialog
+    header="Add Comment"
+    [(visible)]="showCommentDialog"
+    [modal]="true"
+    [closable]="false"
+    [style]="{ width: '80vw', maxWidth: '400px' }"
+    (onHide)="cancelComment()"
+    >
+    <form #form="ngForm"
+            (ngSubmit)="submitComment(form)"
+            (paste)="onPaste($event)"
+            novalidate
+            class="space-y-4">
+
+        <!-- Comment text -->
+        <div>
+        <textarea
+            id="content"
+            name="content"
+            required
+            rows="4"
+            [(ngModel)]="commentModel.content"
+            #contentCtrl="ngModel"
+            placeholder="Write a comment..."
+            class="w-full p-2 border border-gray-300 rounded-md bg-gray-800 text-white placeholder-gray-400 focus:outline-none resize-y"
+        ></textarea>
+        <small *ngIf="contentCtrl.invalid && contentCtrl.touched" class="text-red-500">
+            Comment text is required.
+        </small>
+        </div>
+
+        <!-- Image preview + remove -->
+        <div *ngIf="previewUrl" class="relative">
+        <img
+            [src]="getImageSrc(previewUrl)"
+            alt="preview"
+            class="w-full rounded-lg mb-2 border border-gray-600"
+        />
+        <button
+            type="button"
+            pButton
+            icon="pi pi-trash"
+            class="absolute top-2 right-2 p-2 bg-red-600 hover:bg-red-700 text-white rounded-full"
+            (click)="clearImage()"
+        ></button>
+        </div>
+
+        <!-- File chooser -->
+        <div *ngIf="!previewUrl" class="text-center space-y-2">
+        <input
+            #fileInput
+            type="file"
+            accept="image/*"
+            (change)="onFileChange($event)"
+            hidden
+        />
+        <button
+            type="button"
+            pButton
+            icon="pi pi-upload"
+            label="Attach Image"
+            (click)="fileInput.click()"
+            class="inline-flex items-center justify-center px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md"
+        ></button>
+        <div class="text-sm text-gray-400">Or paste an image</div>
+        </div>
+
+        <!-- Error -->
+        <p-message *ngIf="commentError"
+                severity="error"
+                text="{{ commentError }}"
+                class="block">
+        </p-message>
+
+        <!-- Actions -->
+        <div class="flex justify-end space-x-3">
+        <button pButton type="button" label="Cancel"
+                class="p-button-text text-white"
+                (click)="cancelComment()"></button>
+        <button pButton type="submit" label="Post"
+                [disabled]="commentLoading || form.invalid"
+                [loading]="commentLoading"
+                class="bg-green-600 hover:bg-green-700 text-white"
+        ></button>
+        </div>
+    </form>
+</p-dialog>

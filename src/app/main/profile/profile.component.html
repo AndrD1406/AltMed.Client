@@ -1,49 +1,54 @@
 <ng-container *ngIf="profile; else loading">
     <div class="p-4 max-w-2xl mx-auto flex flex-col gap-6">
+
+        <!-- Profile header with edit on the right -->
+        <div class="flex items-center justify-between">
         <div class="flex items-center gap-4">
-        <img
+            <img
             class="w-24 h-24 rounded-full object-cover"
-            [src]="profile.logo || '/assets/default-logo.png'"
+            [src]="getLogoSrc(profile.logo)"
             alt="User logo"
-        />
-
-        <button
-            pButton
-            type="button"
-            icon="pi pi-pencil"
-            class="p-button-rounded p-button-outlined"
-            (click)="openEditDialog()">
-        </button>
-
-        <div class="flex flex-col">
+            />
             <span class="text-2xl font-semibold">{{ profile.name }}</span>
-            <!-- <span class="text-sm text-gray-400">
-            Joined {{ profile.registeredAt | date:'longDate' }}
-            </span> -->
         </div>
+        <button
+            *ngIf="isOwnProfile"
+            type="button"
+            (click)="openEditDialog()"
+            class="w-10 h-10 flex items-center justify-center rounded-full 
+                bg-gray-800 hover:bg-gray-700 text-white"
+        >
+            <i class="pi pi-pencil text-xl"></i>
+        </button>
         </div>
 
-    <!--     
+        <!-- Divider -->
+        <div class="border-b border-gray-600"></div>
+
+        <!-- Edit dialog -->
         <p-dialog
-        header="Edit Profile"
-        [(visible)]="showEditDialog"
-        [modal]="true"
-        [style]="{ width: '400px' }"
-        (onHide)="closeEditDialog()">
-        <p>Edit form goes here…</p>
-        </p-dialog> -->
+            header="Edit Profile"
+            [(visible)]="showEditDialog"
+            [modal]="true"
+            [style]="{ width: '400px' }"
+            (onHide)="showEditDialog = false"
+        >
+        <edit-profile
+            [model]="editModel"
+            (saved)="profile = $event; showEditDialog = false"
+            (cancelled)="showEditDialog = false"
+        ></edit-profile>
+        </p-dialog>
 
-        <!-- User's posts -->
-        <div class="flex flex-col gap-4">
-        <app-publication
-            *ngFor="let pub of publications"
-            [publication]="pub">
-        </app-publication>
+        <div class="flex flex-col gap-4 pt-4">
+            <publications-container
+                [authorId]="profile.userId"
+            ></publications-container>
         </div>
     </div>
-    </ng-container>
+</ng-container>
 
-    <ng-template #loading>
+<ng-template #loading>
     <div class="p-4 text-center text-gray-500">
         Loading profile…
     </div>

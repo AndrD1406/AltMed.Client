@@ -17,24 +17,20 @@ bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
 
-    // HttpClient + pick up all HTTP_INTERCEPTORS from DI
     provideHttpClient(withInterceptorsFromDi()),
 
-    // Attach the raw JWT on every request
     {
       provide: HTTP_INTERCEPTORS,
       useClass: JwtInterceptor,
       multi: true
     },
 
-    // Refresh token on 401 and retry
     {
       provide: HTTP_INTERCEPTORS,
       useClass: TokenInterceptor,
       multi: true
     },
 
-    // your other providers
     { provide: API_BASE_URL, useValue: environment.apiBaseUrl },
     provideAnimations(),
     providePrimeNG({ theme: { preset: Aura } }),

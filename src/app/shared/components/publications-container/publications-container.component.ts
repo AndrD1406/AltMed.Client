@@ -1,48 +1,193 @@
-import { Component, OnInit } from '@angular/core';
-import { PublicationDto, PublicationServiceProxy } from '../../api/service-proxies';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { CommentCreateDto, CommentDto, PublicationDto, PublicationServiceProxy } from '../../api/service-proxies';
 import { PublicationComponent } from "../publication/publication.component";
 import { CommonModule } from '@angular/common';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
+import { FormsModule, NgForm } from '@angular/forms';
+import { DialogModule } from 'primeng/dialog';
+import { AuthService } from '../../api/auth.service';
+import { fromEvent, map, throttleTime } from 'rxjs';
 
 @Component({
     selector: 'publications-container',
     standalone: true,
-    imports: [PublicationComponent, CommonModule],
+    imports: [PublicationComponent, CommonModule, ButtonModule, MessageModule, DialogModule, FormsModule],
     templateUrl: './publications-container.component.html',
-    styleUrl: './publications-container.component.css'
+    styleUrl: './publications-container.component.css',
 })
 export class PublicationsContainerComponent implements OnInit {
-    publications: PublicationDto[] = [];
+    @Input() authorId?: string;
+    @ViewChild('scrollContainer', { static: true }) scrollContainer!: ElementRef<HTMLElement>;
 
-    constructor(private publicationService: PublicationServiceProxy) { }
+    publications: PublicationDto[] = [];
+    skip = 0;
+    take = 10;
+    loading = false;
+    allLoaded = false;
+
+    // comment dialog state...
+    showCommentDialog = false;
+    commentModel = new CommentCreateDto();
+    previewUrl: string|ArrayBuffer|null = null;
+    commentError?: string;
+    commentLoading = false;
+
+    constructor(
+        private publicationService: PublicationServiceProxy,
+        private authService: AuthService,
+        private cd: ChangeDetectorRef
+    ) {}
 
     ngOnInit(): void {
-    this.publicationService.getWithDetails()
-        .subscribe(result => {
-        result.forEach(pub => {
-            pub.likes = (pub.likes || []).filter(l => l.isLiked);
-        });
-        this.publications = result;
+        this.loadNextPage();
+    }
+
+    trackByPub(_: number, pub: PublicationDto) {
+        return pub.id;
+    }
+
+    onScroll() {
+        const el = this.scrollContainer.nativeElement;
+        if (
+            !this.loading &&
+            !this.allLoaded &&
+            el.scrollTop + el.clientHeight >= el.scrollHeight - 50
+        ) {
+            this.loadNextPage();
+        }
+    }
+
+    private loadNextPage() {
+        if (this.loading || this.allLoaded) return;
+
+        this.loading = true;
+        const currentSkip = this.skip;
+        this.skip += this.take;
+
+        const page$ = this.authorId
+        ? this.publicationService.getByUserIdPaged(this.authorId, currentSkip, this.take)
+        : this.publicationService.getWithDetailsPaged(currentSkip, this.take);
+
+        page$.subscribe({
+        next: batch => {
+            // filter out duplicates
+            const unique = batch.filter(pub =>
+            !this.publications.some(existing => existing.id === pub.id)
+            );
+            // strip out un-liked likes
+            unique.forEach(pub => pub.likes = (pub.likes || []).filter(l => l.isLiked));
+
+            // REASSIGN the array so OnPush picks it up
+            this.publications = [
+            ...this.publications,
+            ...unique
+            ];
+
+            this.loading   = false;
+            this.allLoaded = batch.length < this.take;
+
+            // now that we've updated publications, re-render
+            this.cd.markForCheck();
+        },
+        error: () => {
+            this.loading   = false;
+            this.allLoaded = true;
+            this.cd.markForCheck();
+        }
         });
     }
 
     handleLike(pubId: string) {
-        const publication = this.publications.find(p => p.id === pubId)!;
-
+        const pub = this.publications.find(p => p.id === pubId)!;
         this.publicationService.like(pubId).subscribe(likeDto => {
-            publication.likes = publication.likes || [];
-
-            const idx = publication.likes.findIndex(l => l.id === likeDto.id);
-            if (idx > -1) {
-            publication.likes[idx] = likeDto;
-            } else {
-            publication.likes.push(likeDto);
-            }
-
-            publication.likes = publication.likes.filter(l => l.isLiked);
+        pub.likes = pub.likes || [];
+        const idx = pub.likes.findIndex(l => l.id === likeDto.id);
+        if (idx > -1) pub.likes[idx] = likeDto;
+        else           pub.likes.push(likeDto);
+        pub.likes = pub.likes.filter(l => l.isLiked);
         });
     }
 
     handleComment(pubId: string) {
-        
+        this.commentModel = new CommentCreateDto();
+        this.commentModel.publicationId = pubId;
+        this.commentModel.authorId      = this.authService.getUserIdFromToken()!;
+        this.previewUrl = null;
+        this.showCommentDialog = true;
+    }
+
+    // Paste an image from clipboard
+    onPaste(event: ClipboardEvent) {
+        const items = event.clipboardData?.items;
+        if (!items) return;
+        for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+            const file = item.getAsFile();
+            if (file) {
+            this.loadFile(file);
+            event.preventDefault();
+            }
+            break;
+        }
+        }
+    }
+
+    // Open file picker
+    onFileChange(ev: Event) {
+        const input = ev.target as HTMLInputElement;
+        if (!input.files?.length) return;
+        this.loadFile(input.files[0]);
+    }
+
+    private loadFile(file: File) {
+        const reader = new FileReader();
+        reader.onload = () => {
+        this.previewUrl = reader.result;
+        const dataUrl = reader.result as string;
+        this.commentModel.image64 = dataUrl.split(',')[1];
+        };
+        reader.readAsDataURL(file);
+    }
+
+    clearImage() {
+        this.previewUrl = null;
+        this.commentModel.image64 = undefined;
+    }
+
+    submitComment(form: NgForm) {
+        if (form.invalid) return;
+        this.commentLoading = true;
+        this.commentError   = undefined;
+
+        this.publicationService.comment(this.commentModel)
+        .subscribe({
+            next: (newComment: CommentDto) => {
+            this.commentLoading = false;
+            const parent = this.publications.find(p => p.id === newComment.parentId);
+            if (parent) {
+                parent.comments = parent.comments || [];
+                parent.comments.push(newComment);
+            }
+            this.showCommentDialog = false;
+            },
+            error: err => {
+            this.commentLoading = false;
+            this.commentError = err.error?.detail || 'Failed to add comment';
+            }
+        });
+    }
+
+    cancelComment() {
+        this.showCommentDialog = false;
+    }
+
+    getImageSrc(image: string|ArrayBuffer|null|undefined): string {
+        if (!image) return '';
+        const str = image.toString();
+        if (str.startsWith('data:') || str.startsWith('http')) {
+        return str;
+        }
+        return `data:image/png;base64,${str}`;
     }
 }
