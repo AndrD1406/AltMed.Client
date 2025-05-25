@@ -1,0 +1,11 @@
+<resources>
+  <string key="Main">Main</string>
+  <string key="Search">Search</string>
+  <string key="Profile">Profile</string>
+  <string key="More">More</string>
+  <string key="Settings">Settings</string>
+  <string key="Help">Help</string>
+  <string key="Post">Post</string>
+  <string key="Logout">Logout</string>
+  <string key="New Publication">New Publication</string>
+</resources>

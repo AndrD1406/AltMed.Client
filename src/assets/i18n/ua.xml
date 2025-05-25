@@ -1,0 +1,11 @@
+<resources>
+  <string key="Main">Головна</string>
+  <string key="Search">Пошук</string>
+  <string key="Profile">Профіль</string>
+  <string key="More">Ще</string>
+  <string key="Settings">Налаштування</string>
+  <string key="Help">Допомога</string>
+  <string key="Post">Опублікувати</string>
+  <string key="Logout">Вийти</string>
+  <string key="New Publication">Нова публікація</string>
+</resources>

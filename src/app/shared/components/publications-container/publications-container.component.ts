@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, Input, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { CommentCreateDto, CommentDto, PublicationDto, PublicationServiceProxy } from '../../api/service-proxies';
 import { PublicationComponent } from "../publication/publication.component";
 import { CommonModule } from '@angular/common';
@@ -15,9 +15,23 @@ import { fromEvent, map, throttleTime } from 'rxjs';
     imports: [PublicationComponent, CommonModule, ButtonModule, MessageModule, DialogModule, FormsModule],
     templateUrl: './publications-container.component.html',
     styleUrl: './publications-container.component.css',
+    
 })
 export class PublicationsContainerComponent implements OnInit {
     @Input() authorId?: string;
+     private _searchQuery = '';
+    @Input()
+    set searchQuery(q: string | undefined) {
+        const normalized = q ?? '';
+        if (normalized !== this._searchQuery) {
+        this._searchQuery = normalized;
+        this.resetAndLoad();
+        }
+    }
+
+    get searchQuery(): string {
+        return this._searchQuery;
+    }
     @ViewChild('scrollContainer', { static: true }) scrollContainer!: ElementRef<HTMLElement>;
 
     publications: PublicationDto[] = [];
@@ -26,7 +40,7 @@ export class PublicationsContainerComponent implements OnInit {
     loading = false;
     allLoaded = false;
 
-    // comment dialog state...
+    // comment dialog state
     showCommentDialog = false;
     commentModel = new CommentCreateDto();
     previewUrl: string|ArrayBuffer|null = null;
@@ -40,6 +54,13 @@ export class PublicationsContainerComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
+        this.loadNextPage();
+    }
+
+    resetAndLoad() {
+        this.skip = 0;
+        this.publications = [];
+        this.allLoaded = false;
         this.loadNextPage();
     }
 
@@ -65,29 +86,20 @@ export class PublicationsContainerComponent implements OnInit {
         const currentSkip = this.skip;
         this.skip += this.take;
 
-        const page$ = this.authorId
-        ? this.publicationService.getByUserIdPaged(this.authorId, currentSkip, this.take)
-        : this.publicationService.getWithDetailsPaged(currentSkip, this.take);
+        const page$ = this._searchQuery
+        ? this.publicationService.search(this._searchQuery, currentSkip, this.take)
+        : this.authorId
+            ? this.publicationService.getByUserIdPaged(this.authorId, currentSkip, this.take)
+            : this.publicationService.getWithDetailsPaged(currentSkip, this.take);
 
         page$.subscribe({
         next: batch => {
-            // filter out duplicates
-            const unique = batch.filter(pub =>
-            !this.publications.some(existing => existing.id === pub.id)
-            );
-            // strip out un-liked likes
-            unique.forEach(pub => pub.likes = (pub.likes || []).filter(l => l.isLiked));
+            const unique = batch.filter(p => !this.publications.some(x => x.id === p.id));
+            unique.forEach(p => p.likes = (p.likes || []).filter(l => l.isLiked));
 
-            // REASSIGN the array so OnPush picks it up
-            this.publications = [
-            ...this.publications,
-            ...unique
-            ];
-
-            this.loading   = false;
-            this.allLoaded = batch.length < this.take;
-
-            // now that we've updated publications, re-render
+            this.publications = [...this.publications, ...unique];
+            this.loading     = false;
+            this.allLoaded   = batch.length < this.take;
             this.cd.markForCheck();
         },
         error: () => {
